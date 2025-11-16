@@ -1,22 +1,16 @@
 import { useState } from "react";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
-import { HomePage } from "./components/HomePage";
+import { HomePage } from "./pages/HomePage";
 import { AboutPage } from "./components/AboutPage";
-import { ProductsPage } from "./components/ProductsPage";
-import { ProductDetailPage } from "./components/ProductDetailPage";
+import { ProductsPage } from "./pages/ProductsPage";
+import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { NewsPage } from "./components/NewsPage";
-import { NewsDetailPage } from "./components/NewsDetailPage";
-import { AdminLoginPage } from "./components/admin/AdminLoginPage";
-import { AdminLayout } from "./components/admin/AdminLayout";
+import { NewsDetailPage } from "./pages/NewsDetailPage";
+import { AdminLayout } from "./layout/AdminLayout";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
-import { AdminProductsPage } from "./components/admin/AdminProductsPage";
-import { AdminProductDetailPage } from "./components/admin/AdminProductDetailPage";
 import { AdminProductFormDialog } from "./components/admin/AdminProductFormDialog";
-import { AdminSeriesPage } from "./components/admin/AdminSeriesPage";
-import { AdminNewsPage } from "./components/admin/AdminNewsPage";
 import { AdminNewsFormDialog } from "./components/admin/AdminNewsFormDialog";
-import { AdminNewsDetailPage } from "./components/admin/AdminNewsDetailPage";
 import {
   initialProducts,
   initialBikeSeries,
@@ -33,7 +27,14 @@ import {
   NewsRelated,
   Banner,
 } from "./mockData/adminData";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AdminNewsPage } from "./pages/AdminNewsPage";
+import { AdminSeriesPage } from "./pages/AdminSeriesPage";
+import { AdminProductDetailPage } from "./pages/AdminProductDetailPage";
+import { AdminProductsPage } from "./pages/AdminProductsPage";
+import { AdminLoginPage } from "./pages/AdminLoginPage";
+import { AdminNewsDetailPage } from "./pages/AdminNewsDetailPage";
+import MainLayout from "./layout/MainLayout";
 
 type PageType =
   | "home"
@@ -282,17 +283,55 @@ export default function App() {
     setBanners(updatedBanners);
   };
 
-  // return (
-  //   <Routes>
-  //     {/* <Header currentPage={currentPage} onNavigate={handleNavigate} /> */}
-
-  //     <Route
-  //       path="/home"
-  //       element={<HomePage onNavigate={handleNavigate} banners={banners} />}
-  //     />
-  //     <Route path="/about" element={<AboutPage />} />
-  //   </Routes>
-  // );
+  return (
+    <Routes>
+      <Route path="/" element={<MainLayout />}>
+        <Route index element={<Navigate to="/home" replace />} />
+        <Route path="home" element={<HomePage />} />
+        <Route path="about" element={<AboutPage />} />
+        <Route path="products" element={<ProductsPage />} />
+        <Route path="products/:id" element={<ProductDetailPage />} />
+        <Route path="news" element={<NewsPage />} />
+        <Route path="news/:id" element={<NewsDetailPage />} />
+      </Route>
+      <Route
+        path="/admin"
+        element={
+          <AdminLayout
+            currentPage={""}
+            onLogout={function (): void {
+              throw new Error("Function not implemented.");
+            }}
+          />
+        }
+      >
+        <Route index element={<Navigate to="login" replace />} />
+        <Route
+          path="login"
+          element={
+            <AdminLoginPage
+              onLogin={function (): void {
+                throw new Error("Function not implemented.");
+              }}
+            />
+          }
+        />
+        <Route
+          path="dashboard"
+          element={
+            <AdminDashboard
+              totalProducts={products.length}
+              totalSeries={series.length}
+              totalNews={news.length}
+              banners={banners}
+              onNavigate={handleAdminNavigate}
+              onSaveBanners={handleSaveBanners}
+            />
+          }
+        />
+      </Route>
+    </Routes>
+  );
 
   // Check if accessing admin URL
   if (window.location.pathname.startsWith("/admin") || isAdminMode) {
