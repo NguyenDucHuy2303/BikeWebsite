@@ -1,40 +1,58 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Switch } from '../ui/switch';
-import { ArrowLeft, Save, Plus, X } from 'lucide-react';
-import { News } from '../../mockData/adminData';
-import { Alert, AlertDescription } from '../ui/alert';
-import { ImageUpload } from './ImageUpload';
-import { RichTextEditor } from './RichTextEditor';
-import { Badge } from '../ui/badge';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { Switch } from "../ui/switch";
+import { ArrowLeft, Save, Plus, X } from "lucide-react";
+import { News } from "../../mockData/adminData";
+import { Alert, AlertDescription } from "../ui/alert";
+import { ImageUpload } from "./ImageUpload";
+import { RichTextEditor } from "./RichTextEditor";
+import { Badge } from "../ui/badge";
 
 interface AdminNewsFormProps {
   newsItem: News | null;
   onSave: (
-    news: Omit<News, 'news_id' | 'created_at'> & { news_id?: number, created_at?: string }
+    news: Omit<News, "news_id" | "created_at"> & {
+      news_id?: number;
+      created_at?: string;
+    }
   ) => void;
   onCancel: () => void;
 }
 
-export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps) {
-  const [formData, setFormData] = useState<Omit<News, 'news_id' | 'created_at'> & { news_id?: number, created_at?: string }>({
+export function AdminNewsForm({
+  newsItem,
+  onSave,
+  onCancel,
+}: AdminNewsFormProps) {
+  const [formData, setFormData] = useState<
+    Omit<News, "news_id" | "created_at"> & {
+      news_id?: number;
+      created_at?: string;
+    }
+  >({
     news_id: newsItem?.news_id,
-    title: newsItem?.title || '',
-    slug: newsItem?.slug || '',
-    cover_image: newsItem?.cover_image || '',
-    content: newsItem?.content || '',
+    title: newsItem?.title || "",
+    slug: newsItem?.slug || "",
+    cover_image: newsItem?.cover_image || "",
+    content: newsItem?.content || "",
     tags: newsItem?.tags || [],
     is_hidden: newsItem?.is_hidden ?? false,
     created_at: newsItem?.created_at,
-    seo_title: newsItem?.seo_title || '',
-    seo_description: newsItem?.seo_description || '',
+    seo_title: newsItem?.seo_title || "",
+    seo_description: newsItem?.seo_description || "",
   });
 
-  const [tagInput, setTagInput] = useState('');
+  const [tagInput, setTagInput] = useState("");
 
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -43,21 +61,21 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
     if (formData.title && !newsItem) {
       const slug = formData.title
         .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/đ/g, 'd')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
         .trim();
-      setFormData(prev => ({ ...prev, slug }));
+      setFormData((prev) => ({ ...prev, slug }));
     }
   }, [formData.title, newsItem]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
-    
+
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
@@ -68,16 +86,19 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
   const handleAddTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
       setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
-      setTagInput('');
+      setTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setFormData({ ...formData, tags: formData.tags.filter(tag => tag !== tagToRemove) });
+    setFormData({
+      ...formData,
+      tags: formData.tags.filter((tag) => tag !== tagToRemove),
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleAddTag();
     }
@@ -92,7 +113,7 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h2>{newsItem ? 'Sửa tin tức' : 'Thêm tin tức mới'}</h2>
+            <h2>{newsItem ? "Sửa tin tức" : "Thêm tin tức mới"}</h2>
             <p className="text-gray-500">Nhập thông tin bài viết</p>
           </div>
         </div>
@@ -121,7 +142,9 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
               required
               placeholder="VD: Ra mắt dòng xe đạp điện mới..."
             />
@@ -132,7 +155,9 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
             <Input
               id="slug"
               value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, slug: e.target.value })
+              }
               placeholder="ra-mat-dong-xe-dap-dien-moi"
             />
           </div>
@@ -154,7 +179,12 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
                 onKeyPress={handleKeyPress}
                 placeholder="Nhập tag và nhấn Enter"
               />
-              <Button type="button" onClick={handleAddTag} variant="outline" className="gap-2">
+              <Button
+                type="button"
+                onClick={handleAddTag}
+                variant="outline"
+                className="gap-2"
+              >
                 <Plus className="w-4 h-4" />
                 Thêm
               </Button>
@@ -162,7 +192,11 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
             {formData.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-3 p-3 bg-gray-50 rounded-lg border">
                 {formData.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="gap-2 px-3 py-1">
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    className="gap-2 px-3 py-1"
+                  >
                     {tag}
                     <button
                       type="button"
@@ -181,7 +215,9 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
             <Switch
               id="is_hidden"
               checked={formData.is_hidden}
-              onCheckedChange={(checked) => setFormData({ ...formData, is_hidden: checked })}
+              onCheckedChange={(checked: any) =>
+                setFormData({ ...formData, is_hidden: checked })
+              }
             />
             <Label htmlFor="is_hidden">Ẩn bài viết</Label>
           </div>
@@ -192,7 +228,9 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
       <Card>
         <CardHeader>
           <CardTitle>Nội dung bài viết</CardTitle>
-          <CardDescription>Sử dụng trình soạn thảo để định dạng nội dung</CardDescription>
+          <CardDescription>
+            Sử dụng trình soạn thảo để định dạng nội dung
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <RichTextEditor
@@ -207,7 +245,9 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
       <Card>
         <CardHeader>
           <CardTitle>Cấu hình SEO</CardTitle>
-          <CardDescription>Tối ưu cho công cụ tìm kiếm và chia sẻ mạng xã hội</CardDescription>
+          <CardDescription>
+            Tối ưu cho công cụ tìm kiếm và chia sẻ mạng xã hội
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -215,7 +255,9 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
             <Input
               id="seo_title"
               value={formData.seo_title}
-              onChange={(e) => setFormData({ ...formData, seo_title: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, seo_title: e.target.value })
+              }
               placeholder="Tiêu đề hiển thị trên Google và khi chia sẻ..."
             />
           </div>
@@ -225,7 +267,9 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
             <Textarea
               id="seo_description"
               value={formData.seo_description}
-              onChange={(e) => setFormData({ ...formData, seo_description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, seo_description: e.target.value })
+              }
               rows={3}
               placeholder="Mô tả hiển thị trên Google và khi chia sẻ..."
             />
@@ -233,7 +277,9 @@ export function AdminNewsForm({ newsItem, onSave, onCancel }: AdminNewsFormProps
 
           <div className="p-4 bg-green-50 rounded-lg border border-green-200">
             <p className="text-sm text-green-800">
-              💡 <strong>Lưu ý:</strong> Các thẻ SEO này cũng được sử dụng khi chia sẻ bài viết lên Facebook và các mạng xã hội khác (Open Graph Tags).
+              💡 <strong>Lưu ý:</strong> Các thẻ SEO này cũng được sử dụng khi
+              chia sẻ bài viết lên Facebook và các mạng xã hội khác (Open Graph
+              Tags).
             </p>
           </div>
         </CardContent>

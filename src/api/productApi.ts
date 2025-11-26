@@ -4,9 +4,14 @@ import api from "./axio";
 export const getProducts = () => api.get("/products");
 
 // Tạo product mới
-export const createProduct = (data: { name: string; price: number }) =>
-  api.post("/products", data);
-
+export const createProduct = (data: any) =>
+  api.post("/products", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+export const updateProduct = (id: string, data: any) =>
+  api.put(`/products/${id}`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 // Xóa product
 export const deleteProduct = (id: string) => api.delete(`/products/${id}`);
 

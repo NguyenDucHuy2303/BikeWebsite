@@ -1,16 +1,25 @@
-import { useState, useRef } from 'react';
-import { Upload, X } from 'lucide-react';
-import { Button } from '../ui/button';
+import { useState, useRef } from "react";
+import { Upload, X } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface ImageUploadProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  setFile: any;
+  file: any;
 }
 
-export function ImageUpload({ value, onChange, className = '' }: ImageUploadProps) {
+export function ImageUpload({
+  value,
+  onChange,
+  className = "",
+  setFile,
+  file,
+}: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  console.log("valuevaluevaluevalue", value);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -25,7 +34,7 @@ export function ImageUpload({ value, onChange, className = '' }: ImageUploadProp
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
+
     const files = e.dataTransfer.files;
     if (files.length > 0) {
       handleFile(files[0]);
@@ -34,13 +43,14 @@ export function ImageUpload({ value, onChange, className = '' }: ImageUploadProp
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
+    setFile(files);
     if (files && files.length > 0) {
       handleFile(files[0]);
     }
   };
 
   const handleFile = (file: File) => {
-    if (file.type.startsWith('image/')) {
+    if (file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onloadend = () => {
         onChange(reader.result as string);
@@ -50,9 +60,9 @@ export function ImageUpload({ value, onChange, className = '' }: ImageUploadProp
   };
 
   const handleRemove = () => {
-    onChange('');
+    onChange("");
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -61,7 +71,7 @@ export function ImageUpload({ value, onChange, className = '' }: ImageUploadProp
       {value ? (
         <div className="relative">
           <img
-            src={value}
+            src={`data:image/png;base64,${value}`}
             alt="Preview"
             className="w-full h-64 object-cover rounded-lg border"
           />
@@ -84,16 +94,23 @@ export function ImageUpload({ value, onChange, className = '' }: ImageUploadProp
             border-2 border-dashed rounded-lg p-8
             flex flex-col items-center justify-center
             transition-colors cursor-pointer
-            ${isDragging 
-              ? 'border-green-500 bg-green-50' 
-              : 'border-gray-300 hover:border-gray-400'
+            ${
+              isDragging
+                ? "border-green-500 bg-green-50"
+                : "border-gray-300 hover:border-gray-400"
             }
           `}
           onClick={() => fileInputRef.current?.click()}
         >
-          <Upload className={`w-12 h-12 mb-4 ${isDragging ? 'text-green-500' : 'text-gray-400'}`} />
+          <Upload
+            className={`w-12 h-12 mb-4 ${
+              isDragging ? "text-green-500" : "text-gray-400"
+            }`}
+          />
           <p className="text-sm mb-2">
-            {isDragging ? 'Thả ảnh vào đây' : 'Kéo ảnh vào đây hoặc nhấp để chọn'}
+            {isDragging
+              ? "Thả ảnh vào đây"
+              : "Kéo ảnh vào đây hoặc nhấp để chọn"}
           </p>
           <p className="text-xs text-gray-500">PNG, JPG, GIF tối đa 10MB</p>
           <input

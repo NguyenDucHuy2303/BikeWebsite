@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -39,25 +39,21 @@ import {
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
 import { Alert, AlertDescription } from "../components/ui/alert";
+import {
+  createSeries,
+  deleteSeries,
+  getSeries,
+  updateSeries,
+} from "../api/seriesApi";
 
-interface AdminSeriesPageProps {
-  series: BikeSeries[];
-  onAdd: (series: Omit<BikeSeries, "series_id">) => void;
-  onEdit: (series: BikeSeries) => void;
-  onDelete: (seriesId: number) => void;
-}
+interface AdminSeriesPageProps {}
 
-export function AdminSeriesPage({
-  series,
-  onAdd,
-  onEdit,
-  onDelete,
-}: AdminSeriesPageProps) {
-  const [editSeries, setEditSeries] = useState<BikeSeries | null>(null);
+export function AdminSeriesPage({}: AdminSeriesPageProps) {
+  const [editSeries, setEditSeries] = useState<any>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
-
+  const [serires, setSerires] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -81,24 +77,49 @@ export function AdminSeriesPage({
     });
   };
 
-  const handleSave = () => {
-    if (editSeries) {
-      onEdit({ ...editSeries, ...formData });
-    } else {
-      onAdd(formData);
+  const fetchSerires = async () => {
+    try {
+      const res = await getSeries();
+      setSerires(res.data);
+    } catch (err) {
+      console.error(err);
     }
+  };
 
+  const handleSave = async () => {
+    console.log("editSeries", editSeries);
+
+    if (editSeries && editSeries.id) {
+      await updateSeries(editSeries.id.toString(), {
+        name: formData.name,
+        description: formData.description,
+      });
+      fetchSerires();
+    } else {
+      await createSeries({
+        name: formData.name,
+        description: formData.description,
+      });
+      fetchSerires();
+    }
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
     resetForm();
   };
 
-  const handleDelete = (id: number) => {
-    onDelete(id);
+  const handleDelete = async (id: string) => {
+    if (id) {
+      await deleteSeries(id);
+      fetchSerires();
+    }
     setDeleteId(null);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
   };
+
+  useEffect(() => {
+    fetchSerires();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -126,13 +147,14 @@ export function AdminSeriesPage({
       <Card>
         <CardHeader>
           <CardTitle>Danh sách Dòng xe</CardTitle>
-          <CardDescription>Tổng cộng {series.length} dòng xe</CardDescription>
+          <CardDescription>Tổng cộng {serires.length} dòng xe</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Index</TableHead>
                   <TableHead>ID</TableHead>
                   <TableHead>Tên dòng xe</TableHead>
                   <TableHead>Mô tả</TableHead>
@@ -140,7 +162,7 @@ export function AdminSeriesPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {series.length === 0 ? (
+                {serires.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={4}
@@ -150,9 +172,10 @@ export function AdminSeriesPage({
                     </TableCell>
                   </TableRow>
                 ) : (
-                  series.map((s) => (
-                    <TableRow key={s.series_id}>
-                      <TableCell>#{s.series_id}</TableCell>
+                  serires.map((s, index) => (
+                    <TableRow key={s.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{s.id}</TableCell>
                       <TableCell>{s.name}</TableCell>
                       <TableCell className="max-w-xs truncate text-gray-500">
                         {s.description}
@@ -170,7 +193,7 @@ export function AdminSeriesPage({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setDeleteId(s.series_id)}
+                            onClick={() => setDeleteId(s.id)}
                             title="Xóa"
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
@@ -253,7 +276,7 @@ export function AdminSeriesPage({
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteId && handleDelete(deleteId)}
+              onClick={() => deleteId && handleDelete(deleteId.toString())}
               className="bg-red-600 hover:bg-red-700"
             >
               Xóa

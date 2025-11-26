@@ -1,14 +1,26 @@
-import { useState, useRef } from 'react';
-import { Upload, X } from 'lucide-react';
-import { Button } from '../ui/button';
+import { useState, useRef } from "react";
+import { Upload, X } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface MultiImageUploadProps {
-  images: Array<{ url: string; is_main: boolean }>;
+  images: any;
   onChange: (images: Array<{ url: string; is_main: boolean }>) => void;
   className?: string;
+  setImages: any;
+  setFiles: any;
+  files: any;
 }
 
-export function MultiImageUpload({ images, onChange, className = '' }: MultiImageUploadProps) {
+export function MultiImageUpload({
+  images,
+  onChange,
+  className = "",
+  setImages,
+  setFiles,
+  files,
+}: MultiImageUploadProps) {
+  // const [files, setFiles] = useState<File[]>([]); // giữ file thật
+
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -25,21 +37,34 @@ export function MultiImageUpload({ images, onChange, className = '' }: MultiImag
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    handleFiles(files);
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    const imageFiles = droppedFiles.filter((f) => f.type.startsWith("image/"));
+
+    setFiles((prev: any) => [...prev, ...imageFiles]);
+
+    const previews = imageFiles.map((file) => ({
+      url: URL.createObjectURL(file),
+      is_main: images.length === 0,
+    }));
+    setImages((prev: any) => [...prev, ...previews]);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      handleFiles(Array.from(files));
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files);
+      setFiles((prev: any) => [...prev, ...selectedFiles]);
+
+      const previews = selectedFiles.map((file) => ({
+        url: URL.createObjectURL(file),
+        is_main: images.length === 0, // nếu chưa có ảnh nào, ảnh đầu tiên là main
+      }));
+      setImages((prev: any) => [...prev, ...previews]);
     }
   };
 
   const handleFiles = (files: File[]) => {
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+
     let processedCount = 0;
     const newImages: Array<{ url: string; is_main: boolean }> = [];
 
@@ -48,10 +73,10 @@ export function MultiImageUpload({ images, onChange, className = '' }: MultiImag
       reader.onloadend = () => {
         newImages.push({
           url: reader.result as string,
-          is_main: images.length === 0 && newImages.length === 0
+          is_main: images.length === 0 && newImages.length === 0,
         });
         processedCount++;
-        
+
         if (processedCount === imageFiles.length) {
           onChange([...images, ...newImages]);
         }
@@ -72,7 +97,7 @@ export function MultiImageUpload({ images, onChange, className = '' }: MultiImag
   const handleSetMain = (index: number) => {
     const updated = images.map((img, i) => ({
       ...img,
-      is_main: i === index
+      is_main: i === index,
     }));
     onChange(updated);
   };
@@ -103,18 +128,29 @@ export function MultiImageUpload({ images, onChange, className = '' }: MultiImag
             border-2 border-dashed rounded-lg p-12
             flex flex-col items-center justify-center
             transition-colors cursor-pointer
-            ${isDragging 
-              ? 'border-green-500 bg-green-50' 
-              : 'border-gray-300 hover:border-gray-400'
+            ${
+              isDragging
+                ? "border-green-500 bg-green-50"
+                : "border-gray-300 hover:border-gray-400"
             }
           `}
         >
-          <Upload className={`w-16 h-16 mb-4 ${isDragging ? 'text-green-500' : 'text-gray-400'}`} />
+          <Upload
+            className={`w-16 h-16 mb-4 ${
+              isDragging ? "text-green-500" : "text-gray-400"
+            }`}
+          />
           <p className="mb-2">
-            {isDragging ? 'Thả ảnh vào đây' : 'Kéo ảnh vào đây hoặc nhấp để chọn'}
+            {isDragging
+              ? "Thả ảnh vào đây"
+              : "Kéo ảnh vào đây hoặc nhấp để chọn"}
           </p>
-          <p className="text-sm text-gray-500">Có thể chọn nhiều ảnh cùng lúc</p>
-          <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF tối đa 10MB mỗi ảnh</p>
+          <p className="text-sm text-gray-500">
+            Có thể chọn nhiều ảnh cùng lúc
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            PNG, JPG, GIF tối đa 10MB mỗi ảnh
+          </p>
         </div>
       ) : (
         // Grid of images
@@ -125,13 +161,13 @@ export function MultiImageUpload({ images, onChange, className = '' }: MultiImag
             onDrop={handleDrop}
             className={`
               grid grid-cols-2 md:grid-cols-3 gap-4 p-4 rounded-lg border-2 border-dashed
-              ${isDragging ? 'border-green-500 bg-green-50' : 'border-gray-200'}
+              ${isDragging ? "border-green-500 bg-green-50" : "border-gray-200"}
             `}
           >
             {images.map((img, index) => (
               <div key={index} className="relative group">
                 <img
-                  src={img.url}
+                  src={`data:image/png;base64,${img}`}
                   alt={`Product ${index + 1}`}
                   className="w-full h-40 object-cover rounded-lg border"
                 />
@@ -160,10 +196,10 @@ export function MultiImageUpload({ images, onChange, className = '' }: MultiImag
               </div>
             ))}
           </div>
-          
-          <Button 
-            type="button" 
-            variant="outline" 
+
+          <Button
+            type="button"
+            variant="outline"
             onClick={openFileDialog}
             className="w-full gap-2"
           >

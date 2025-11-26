@@ -1,16 +1,10 @@
 import { useState } from "react";
-import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
 import { HomePage } from "./pages/HomePage";
-import { AboutPage } from "./components/AboutPage";
+import { AboutPage } from "./pages/AboutPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
-import { NewsPage } from "./components/NewsPage";
 import { NewsDetailPage } from "./pages/NewsDetailPage";
 import { AdminLayout } from "./layout/AdminLayout";
-import { AdminDashboard } from "./components/admin/AdminDashboard";
-import { AdminProductFormDialog } from "./components/admin/AdminProductFormDialog";
-import { AdminNewsFormDialog } from "./components/admin/AdminNewsFormDialog";
 import {
   initialProducts,
   initialBikeSeries,
@@ -28,13 +22,13 @@ import {
   Banner,
 } from "./mockData/adminData";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AdminNewsPage } from "./pages/AdminNewsPage";
-import { AdminSeriesPage } from "./pages/AdminSeriesPage";
-import { AdminProductDetailPage } from "./pages/AdminProductDetailPage";
-import { AdminProductsPage } from "./pages/AdminProductsPage";
 import { AdminLoginPage } from "./pages/AdminLoginPage";
-import { AdminNewsDetailPage } from "./pages/AdminNewsDetailPage";
 import MainLayout from "./layout/MainLayout";
+import { NewsPage } from "./pages/NewsPage";
+import { AdminProductsPage } from "./pages/AdminProductsPage";
+import { AdminSeriesPage } from "./pages/AdminSeriesPage";
+import { AdminNewsPage } from "./pages/AdminNewsPage";
+import { AdminDashboard } from "./pages/AdminDashboard";
 
 type PageType =
   | "home"
@@ -109,17 +103,6 @@ export default function App() {
     setEditingProductId(null);
     setEditingNewsId(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleAdminLogin = () => {
-    setIsAdminLoggedIn(true);
-    setIsAdminMode(true);
-  };
-
-  const handleAdminLogout = () => {
-    setIsAdminLoggedIn(false);
-    setIsAdminMode(false);
-    setAdminPage("dashboard");
   };
 
   // Product CRUD
@@ -329,175 +312,42 @@ export default function App() {
             />
           }
         />
+        <Route
+          path="products"
+          element={
+            <AdminProductsPage
+              series={[]}
+              onEdit={function (productId: number): void {
+                throw new Error("Function not implemented.");
+              }}
+              onDelete={function (productId: number): void {
+                throw new Error("Function not implemented.");
+              }}
+              onViewDetail={function (productId: number): void {
+                throw new Error("Function not implemented.");
+              }}
+            />
+          }
+        />
+        <Route path="series" element={<AdminSeriesPage />} />
+        <Route
+          path="news"
+          element={
+            <AdminNewsPage
+              news={initialNews}
+              onDelete={function (seriesId: number): void {
+                throw new Error("Function not implemented.");
+              }}
+              onEdit={function (newsId: number): void {
+                throw new Error("Function not implemented.");
+              }}
+              onAdd={function (): void {
+                throw new Error("Function not implemented.");
+              }}
+            />
+          }
+        />
       </Route>
     </Routes>
-  );
-
-  // Check if accessing admin URL
-  if (window.location.pathname.startsWith("/admin") || isAdminMode) {
-    if (!isAdminLoggedIn) {
-      return <AdminLoginPage onLogin={handleAdminLogin} />;
-    }
-
-    return (
-      <AdminLayout
-        currentPage={adminPage}
-        onNavigate={handleAdminNavigate}
-        onLogout={handleAdminLogout}
-      >
-        {adminPage === "dashboard" && (
-          <AdminDashboard
-            totalProducts={products.length}
-            totalSeries={series.length}
-            totalNews={news.length}
-            banners={banners}
-            onNavigate={handleAdminNavigate}
-            onSaveBanners={handleSaveBanners}
-          />
-        )}
-
-        {adminPage === "products" && (
-          <>
-            <AdminProductsPage
-              products={products}
-              series={series}
-              onEdit={handleEditProduct}
-              onDelete={handleDeleteProduct}
-              onAdd={handleAddProduct}
-              onViewDetail={handleViewProductDetail}
-            />
-            <AdminProductFormDialog
-              open={showProductFormDialog}
-              product={
-                editingProductId
-                  ? products.find((p) => p.product_id === editingProductId) ||
-                    null
-                  : null
-              }
-              series={series}
-              images={productImages}
-              specs={productSpecs}
-              onSave={handleSaveProduct}
-              onClose={() => setShowProductFormDialog(false)}
-            />
-          </>
-        )}
-
-        {adminPage === "productDetail" && (
-          <>
-            <AdminProductDetailPage
-              productId={adminSelectedProductId}
-              onNavigate={handleAdminNavigate}
-              onEdit={handleEditProduct}
-              onDelete={handleDeleteProduct}
-            />
-            <AdminProductFormDialog
-              open={showProductFormDialog}
-              product={
-                editingProductId
-                  ? products.find((p) => p.product_id === editingProductId) ||
-                    null
-                  : null
-              }
-              series={series}
-              images={productImages}
-              specs={productSpecs}
-              onSave={handleSaveProduct}
-              onClose={() => setShowProductFormDialog(false)}
-            />
-          </>
-        )}
-
-        {adminPage === "series" && (
-          <AdminSeriesPage
-            series={series}
-            onAdd={handleAddSeries}
-            onEdit={handleEditSeries}
-            onDelete={handleDeleteSeries}
-          />
-        )}
-
-        {adminPage === "news" && (
-          <>
-            <AdminNewsPage
-              news={news}
-              onEdit={handleEditNews}
-              onDelete={handleDeleteNews}
-              onAdd={handleAddNews}
-              onViewDetail={handleViewNewsDetail}
-            />
-            <AdminNewsFormDialog
-              open={showNewsFormDialog}
-              newsItem={
-                editingNewsId
-                  ? news.find((n) => n.news_id === editingNewsId) || null
-                  : null
-              }
-              onSave={handleSaveNews}
-              onClose={() => setShowNewsFormDialog(false)}
-            />
-          </>
-        )}
-
-        {adminPage === "newsDetail" && (
-          <>
-            <AdminNewsDetailPage
-              newsId={adminSelectedNewsId}
-              onNavigate={handleAdminNavigate}
-              onEdit={handleEditNews}
-              onDelete={handleDeleteNews}
-            />
-            <AdminNewsFormDialog
-              open={showNewsFormDialog}
-              newsItem={
-                editingNewsId
-                  ? news.find((n) => n.news_id === editingNewsId) || null
-                  : null
-              }
-              onSave={handleSaveNews}
-              onClose={() => setShowNewsFormDialog(false)}
-            />
-          </>
-        )}
-      </AdminLayout>
-    );
-  }
-
-  // User site
-  return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header currentPage={currentPage} onNavigate={handleNavigate} />
-
-      <main className="flex-1">
-        {currentPage === "home" && (
-          <HomePage onNavigate={handleNavigate} banners={banners} />
-        )}
-        {currentPage === "about" && <AboutPage />}
-        {currentPage === "products" && (
-          <ProductsPage onNavigate={handleNavigate} />
-        )}
-        {currentPage === "detail" && (
-          <ProductDetailPage
-            productId={selectedProductId}
-            onNavigate={handleNavigate}
-          />
-        )}
-        {currentPage === "news" && <NewsPage onNavigate={handleNavigate} />}
-        {currentPage === "newsDetail" && (
-          <NewsDetailPage newsId={selectedNewsId} onNavigate={handleNavigate} />
-        )}
-      </main>
-
-      <Footer />
-
-      {/* Admin Access Button (for demo) */}
-      <button
-        onClick={() => setIsAdminMode(true)}
-        className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-green-700 transition-colors"
-        title="Truy cập trang quản trị"
-      >
-        Admin
-      </button>
-    </div>
   );
 }

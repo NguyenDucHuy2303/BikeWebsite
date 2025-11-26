@@ -1,44 +1,57 @@
-import { useState, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Switch } from '../ui/switch';
-import { Save, Plus, X } from 'lucide-react';
-import { News } from '../../mockData/adminData';
-import { ImageUpload } from './ImageUpload';
-import { RichTextEditor } from './RichTextEditor';
-import { Badge } from '../ui/badge';
-import { ScrollArea } from '../ui/scroll-area';
+import { useState, useEffect } from "react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Switch } from "../ui/switch";
+import { Save, Plus, X } from "lucide-react";
+import { News } from "../../mockData/adminData";
+import { ImageUpload } from "./ImageUpload";
+import { RichTextEditor } from "./RichTextEditor";
+import { Badge } from "../ui/badge";
+import { ScrollArea } from "../ui/scroll-area";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
+} from "../ui/dialog";
 
 interface AdminNewsFormDialogProps {
   open: boolean;
   newsItem: News | null;
   onSave: (
-    news: Omit<News, 'news_id' | 'created_at'> & { news_id?: number, created_at?: string }
+    news: Omit<News, "news_id" | "created_at"> & {
+      news_id?: number;
+      created_at?: string;
+    }
   ) => void;
   onClose: () => void;
 }
 
-export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNewsFormDialogProps) {
-  const [formData, setFormData] = useState<Omit<News, 'news_id' | 'created_at'> & { news_id?: number, created_at?: string }>({
+export function AdminNewsFormDialog({
+  open,
+  newsItem,
+  onSave,
+  onClose,
+}: AdminNewsFormDialogProps) {
+  const [formData, setFormData] = useState<
+    Omit<News, "news_id" | "created_at"> & {
+      news_id?: number;
+      created_at?: string;
+    }
+  >({
     news_id: newsItem?.news_id,
-    title: newsItem?.title || '',
-    slug: newsItem?.slug || '',
-    cover_image: newsItem?.cover_image || '',
-    content: newsItem?.content || '',
+    title: newsItem?.title || "",
+    slug: newsItem?.slug || "",
+    cover_image: newsItem?.cover_image || "",
+    content: newsItem?.content || "",
     tags: newsItem?.tags || [],
     is_hidden: newsItem?.is_hidden ?? false,
     created_at: newsItem?.created_at,
   });
 
-  const [tagInput, setTagInput] = useState('');
+  const [tagInput, setTagInput] = useState("");
 
   // Update form when newsItem changes
   useEffect(() => {
@@ -57,17 +70,17 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
       });
     } else {
       setFormData({
-        title: '',
-        slug: '',
-        cover_image: '',
-        content: '',
+        title: "",
+        slug: "",
+        cover_image: "",
+        content: "",
         tags: [],
         is_hidden: false,
-        seo_title: '',
-        seo_description: '',
+        seo_title: "",
+        seo_description: "",
       });
     }
-    setTagInput('');
+    setTagInput("");
   }, [newsItem, open]);
 
   // Auto-generate slug from title
@@ -75,14 +88,14 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
     if (formData.title && !newsItem) {
       const slug = formData.title
         .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/đ/g, 'd')
-        .replace(/[^a-z0-9\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
         .trim();
-      setFormData(prev => ({ ...prev, slug }));
+      setFormData((prev) => ({ ...prev, slug }));
     }
   }, [formData.title, newsItem]);
 
@@ -95,16 +108,19 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
   const handleAddTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
       setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
-      setTagInput('');
+      setTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setFormData({ ...formData, tags: formData.tags.filter(tag => tag !== tagToRemove) });
+    setFormData({
+      ...formData,
+      tags: formData.tags.filter((tag) => tag !== tagToRemove),
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleAddTag();
     }
@@ -114,10 +130,10 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] sm:!w-[90vw] sm:!max-w-[90vw] md:!w-[85vw] md:!max-w-[85vw] lg:!w-[80vw] lg:!max-w-[80vw] xl:!w-[85vw] xl:!max-w-[85vw] 2xl:!w-[90vw] 2xl:!max-w-[1800px] max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6">
-          <DialogTitle>{newsItem ? 'Sửa tin tức' : 'Thêm tin tức mới'}</DialogTitle>
-          <DialogDescription>
-            Nhập thông tin bài viết
-          </DialogDescription>
+          <DialogTitle>
+            {newsItem ? "Sửa tin tức" : "Thêm tin tức mới"}
+          </DialogTitle>
+          <DialogDescription>Nhập thông tin bài viết</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[calc(90vh-120px)] px-6">
@@ -125,14 +141,16 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
             {/* Basic Information */}
             <div className="space-y-4 p-6 bg-gray-50 rounded-lg border">
               <h3>Thông tin cơ bản</h3>
-              
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2 lg:col-span-2">
                   <Label htmlFor="title">Tiêu đề bài viết *</Label>
                   <Input
                     id="title"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     required
                     placeholder="VD: Ra mắt dòng xe đạp điện mới..."
                   />
@@ -143,7 +161,9 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
                   <Input
                     id="slug"
                     value={formData.slug}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, slug: e.target.value })
+                    }
                     placeholder="ra-mat-dong-xe-dap-dien-moi"
                   />
                 </div>
@@ -152,7 +172,9 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
                   <Label htmlFor="cover_image">Ảnh bìa *</Label>
                   <ImageUpload
                     value={formData.cover_image}
-                    onChange={(url) => setFormData({ ...formData, cover_image: url })}
+                    onChange={(url) =>
+                      setFormData({ ...formData, cover_image: url })
+                    }
                   />
                 </div>
 
@@ -165,7 +187,12 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
                       onKeyPress={handleKeyPress}
                       placeholder="Nhập tag và nhấn Enter"
                     />
-                    <Button type="button" onClick={handleAddTag} variant="outline" className="gap-2 shrink-0">
+                    <Button
+                      type="button"
+                      onClick={handleAddTag}
+                      variant="outline"
+                      className="gap-2 shrink-0"
+                    >
                       <Plus className="w-4 h-4" />
                       Thêm
                     </Button>
@@ -173,7 +200,11 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
                   {formData.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-3 p-3 bg-white rounded-lg border">
                       {formData.tags.map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="gap-2 px-3 py-1">
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="gap-2 px-3 py-1"
+                        >
                           {tag}
                           <button
                             type="button"
@@ -192,7 +223,9 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
                   <Switch
                     id="is_hidden"
                     checked={formData.is_hidden}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_hidden: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, is_hidden: checked })
+                    }
                   />
                   <Label htmlFor="is_hidden">Ẩn bài viết</Label>
                 </div>
@@ -204,7 +237,9 @@ export function AdminNewsFormDialog({ open, newsItem, onSave, onClose }: AdminNe
               <h3>Nội dung bài viết</h3>
               <RichTextEditor
                 value={formData.content}
-                onChange={(value) => setFormData({ ...formData, content: value })}
+                onChange={(value) =>
+                  setFormData({ ...formData, content: value })
+                }
                 placeholder="Nhập nội dung bài viết..."
               />
             </div>
