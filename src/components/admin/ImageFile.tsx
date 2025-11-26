@@ -3,11 +3,9 @@ import { Upload, X } from "lucide-react";
 import { Button } from "../ui/button";
 
 interface FlexibleImageUploadProps {
-  value: string[]; // mảng Base64 để hiển thị preview
-  onChange: (value: string[]) => void;
+  value: File[]; // mảng Base64 để hiển thị preview
+  onChange: (value: File[]) => void;
   className?: string;
-  setFiles: (files: File[] | ((prev: File[]) => File[])) => void;
-  files: File[];
   multiple?: boolean; // true = nhiều file, false = 1 file
 }
 
@@ -15,17 +13,41 @@ export function FlexibleImageUpload({
   value,
   onChange,
   className = "",
-  setFiles,
-  files,
   multiple = false,
 }: FlexibleImageUploadProps) {
-  const [internalValue, setInternalValue] = useState<string[]>(value); // state nội bộ
+  if (multiple) {
+    console.log("multiple", value);
+  } else {
+    console.log("value", value);
+  }
+
+  const [internalValue, setInternalValue] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [files, setFiles] = useState<File[]>([]);
   // Đồng bộ internalValue với value prop khi value thay đổi từ ngoài
+
   useEffect(() => {
-    setInternalValue(value);
+    async function filesToBase64(files: File[]) {
+      const promises = files.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          })
+      );
+      const base64Files = await Promise.all(promises);
+      setInternalValue(base64Files);
+      setFiles(files); // đồng bộ luôn files state
+    }
+
+    if (value && value.length > 0) {
+      filesToBase64(value);
+    } else {
+      setInternalValue([]);
+      setFiles([]);
+    }
   }, [value]);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -56,13 +78,15 @@ export function FlexibleImageUpload({
   };
 
   const processFiles = (filesArray: File[]) => {
-    // Update File state
-    setFiles((prev) => (multiple ? [...prev, ...filesArray] : filesArray));
+    setFiles((prev) => {
+      const newFiles = multiple ? [...prev, ...filesArray] : filesArray;
+      onChange(newFiles);
+      return newFiles;
+    });
 
-    // Convert to Base64 for preview
-    const readers: Promise<string>[] = filesArray.map(
+    const readers = filesArray.map(
       (file) =>
-        new Promise((resolve) => {
+        new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => resolve(reader.result as string);
           reader.readAsDataURL(file);
@@ -70,19 +94,16 @@ export function FlexibleImageUpload({
     );
 
     Promise.all(readers).then((base64Files) => {
-      const newValue = multiple
-        ? [...internalValue, ...base64Files]
-        : [base64Files[0]];
-      setInternalValue(newValue); // cập nhật internal state
-      onChange(newValue); // gọi callback với mảng đầy đủ
+      setInternalValue((prev) =>
+        multiple ? [...prev, ...base64Files] : [base64Files[0]]
+      );
     });
   };
 
   const handleRemove = (index: number) => {
-    const updatedValue = internalValue.filter((_, i) => i !== index);
-    setInternalValue(updatedValue); // cập nhật state nội bộ
-    onChange(updatedValue); // gọi callback
-    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setInternalValue((prev) => prev.filter((_, i) => i !== index));
+    onChange(files.filter((_, i) => i !== index));
   };
 
   const renderDropZone = () => (
@@ -129,7 +150,9 @@ export function FlexibleImageUpload({
             <div key={index} className="relative">
               <img
                 src={
-                  img.startsWith("data:") ? img : `data:image/png;base64,${img}`
+                  typeof img === "string" && img.startsWith("data:")
+                    ? img
+                    : `data:image/png;base64,${img || ""}`
                 }
                 alt={`Preview ${index}`}
                 className="w-full h-40 object-cover rounded-lg border"

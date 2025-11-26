@@ -87,8 +87,6 @@ export function AdminSeriesPage({}: AdminSeriesPageProps) {
   };
 
   const handleSave = async () => {
-    console.log("editSeries", editSeries);
-
     if (editSeries && editSeries.id) {
       await updateSeries(editSeries.id.toString(), {
         name: formData.name,

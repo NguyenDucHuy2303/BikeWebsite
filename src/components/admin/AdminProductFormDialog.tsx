@@ -38,6 +38,16 @@ import {
 } from "../../api/productApi";
 import { FlexibleImageUpload } from "./ImageFile";
 
+function base64ToFile(base64: string, filename: string): File {
+  const arr = base64.split(",");
+  const mime = arr[0].match(/:(.*?);/)![1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
+  return new File([u8arr], filename, { type: mime });
+}
+
 interface AdminProductFormDialogProps {
   open: boolean;
   product: any | null;
@@ -56,22 +66,26 @@ export function AdminProductFormDialog({
   const [serires, setSerires] = useState<any[]>([]);
   const [formData, setFormData] = useState<Omit<any, "id"> & { id?: number }>(
     product || {
-      seriesId: product.series.id || "",
-      name: "1",
-      shortDesc: "1",
-      description: "1",
+      seriesId: "",
+      name: "",
+      shortDesc: "",
+      description: "",
       isActive: true,
     }
   );
 
-  const [files, setFiles] = useState<File[]>([]);
-  const [files2, setFiles2] = useState<File[]>([]);
-  const [productImages, setProductImages] = useState<any[]>(
+  const [galleryImages, setGalleryImages] = useState<File[]>(
     product?.galleryImages || []
   );
-  const [specImage, setSpecImage] = useState<any[]>(
-    product?.techImage ? [product?.techImag] : []
+  const [techImage, setTechImage] = useState<File[]>(
+    product?.techImage ? [product?.techImage] : []
   );
+  // const [productImages, setProductImages] = useState<any[]>(
+  //   product?.galleryImages || []
+  // );
+  // const [specImage, setSpecImage] = useState<any[]>(
+  //   product?.techImage ? [product?.techImage] : []
+  // );
 
   const [features, setFeatures] = useState<string[]>(["", "", ""]);
   const [sections, setSections] = useState<
@@ -80,8 +94,6 @@ export function AdminProductFormDialog({
   const [specifications, setSpecifications] = useState<
     { title: string; description: string }[]
   >([{ title: "", description: "" }]);
-  console.log("productproductproduct", product);
-
   const [showSuccess, setShowSuccess] = useState(false);
 
   // useEffect(() => {
@@ -145,10 +157,6 @@ export function AdminProductFormDialog({
         .trim();
       setFormData((prev) => ({ ...prev, slug }));
     }
-    if (product) {
-      setProductImages(product?.galleryImages || []);
-      setSpecImage(product?.techImage ? [product?.techImage] : []);
-    }
   }, [formData.name, product]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,8 +172,10 @@ export function AdminProductFormDialog({
       JSON.stringify(features.filter((p) => p.trim() !== ""))
     );
     formDataToSend.append("sections", JSON.stringify(sections));
-    [...files, ...files2].forEach((file) =>
-      formDataToSend.append("files", file)
+
+    [...techImage].forEach((file) => formDataToSend.append("techImage", file));
+    [...galleryImages].forEach((file) =>
+      formDataToSend.append("galleryImages", file)
     );
     if (!product) {
       const res = await createProduct(formDataToSend);
@@ -177,26 +187,6 @@ export function AdminProductFormDialog({
       setShowSuccess(false);
       onClose();
     }, 1500);
-  };
-
-  const handleImagesChange = (
-    images: Array<{ url: string; is_main: boolean }>
-  ) => {
-    setProductImages(
-      images.map((img, index) => ({
-        ...img,
-        sort_order: index + 1,
-      }))
-    );
-  };
-
-  const fetchProduct = async () => {
-    try {
-      const res = await getProductById(product?.id || "");
-      console.log("resresresres", res);
-    } catch (err) {
-      console.error(err);
-    }
   };
 
   const fetchSerires = async () => {
@@ -213,10 +203,47 @@ export function AdminProductFormDialog({
   }, []);
 
   useEffect(() => {
-    if (product) {
-      fetchProduct();
+    if (serires.length > 0) {
+      if (product) {
+        // Edit mode
+        console.log("product", product);
+
+        setFormData((prev) => ({
+          ...prev,
+          seriesId: product?.series?.id?.toString() || "",
+          name: product?.name,
+          shortDesc: product?.shortDesc,
+          description: product?.description,
+          isActive: product?.isActive,
+        }));
+        setFeatures(product?.features || ["", "", ""]);
+        const filesFromBE = product?.galleryImages
+          ? product?.galleryImages.map((b64: any, i: number) =>
+              base64ToFile(
+                `data:image/png;base64,${b64 || ""}`,
+                `image-${i + 1}.png`
+              )
+            )
+          : [];
+        const filesFromBETechImage = product?.techImage
+          ? [product?.techImage].map((b64: any, i: number) =>
+              base64ToFile(
+                `data:image/png;base64,${b64 || ""}`,
+                `image-${i}.png`
+              )
+            )
+          : [];
+        setGalleryImages(filesFromBE || []);
+        setTechImage(filesFromBETechImage || []);
+      } else {
+        // Add mode, auto select first series if empty
+        setFormData((prev) => ({
+          ...prev,
+          seriesId: prev.seriesId || serires[0]?.id?.toString() || "",
+        }));
+      }
     }
-  }, [product]);
+  }, [serires, product]);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -268,7 +295,7 @@ export function AdminProductFormDialog({
                   }
                 >
                   <SelectTrigger id="series">
-                    <SelectValue />
+                    <SelectValue placeholder="Chọn dòng xe" />
                   </SelectTrigger>
                   <SelectContent>
                     {serires.map((s) => (
@@ -316,19 +343,10 @@ export function AdminProductFormDialog({
                 Thêm nhiều hình ảnh cho sản phẩm (chọn ảnh chính)
               </p>
               <FlexibleImageUpload
-                value={productImages}
-                onChange={setProductImages}
-                files={files}
-                setFiles={setFiles}
+                value={galleryImages}
+                onChange={setGalleryImages}
                 multiple
               />
-              {/* <MultiImageUpload
-                images={productImages}
-                onChange={handleImagesChange}
-                setImages={setProductImages}
-                files={files}
-                setFiles={setFiles}
-              /> */}
             </div>
 
             {/* Detailed Description */}
@@ -468,17 +486,9 @@ export function AdminProductFormDialog({
                   Tải lên 1 ảnh chi tiết các thông số kỹ thuật của sản phẩm
                 </p>
                 <FlexibleImageUpload
-                  value={specImage}
-                  onChange={setSpecImage}
-                  files={files2}
-                  setFiles={setFiles2}
+                  value={techImage}
+                  onChange={setTechImage}
                 />
-                {/* <ImageUpload
-                  value={specImage}
-                  onChange={setSpecImage}
-                  setFile={setFiles2}
-                  file={files2}
-                /> */}
               </div>
             </div>
 

@@ -73,6 +73,10 @@ export function AdminProductsPage({
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    fetchProducts();
+  }, [showProductFormDialog]);
+
   return (
     <>
       <div className="py-12 bg-gray-50">
@@ -99,18 +103,18 @@ export function AdminProductsPage({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
               <div
-                key={product.id}
+                key={product?.id}
                 className="bg-white rounded-xl shadow-sm hover:shadow-lg transition overflow-hidden relative group"
               >
                 {/* Image with overlay buttons */}
                 <div className="relative aspect-video overflow-hidden">
                   <button
-                    onClick={() => onViewDetail(product.id)}
+                    onClick={() => onViewDetail(product?.id)}
                     className="w-full h-full"
                   >
                     <ImageWithFallback
-                      src={product.techImage}
-                      alt={product.name}
+                      src={product?.techImage}
+                      alt={product?.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </button>
@@ -121,8 +125,8 @@ export function AdminProductsPage({
                       size="sm"
                       onClick={(e: any) => {
                         e.stopPropagation();
-                        handleEditProduct(product.id);
-                        onEdit(product.id);
+                        handleEditProduct(product?.id);
+                        // onEdit(product?.id);
                       }}
                       className="bg-white text-green-600 hover:bg-green-50 shadow-md"
                     >
@@ -132,7 +136,7 @@ export function AdminProductsPage({
                       size="sm"
                       onClick={(e: any) => {
                         e.stopPropagation();
-                        setDeleteId(product.id);
+                        setDeleteId(product?.id);
                       }}
                       variant="destructive"
                       className="shadow-md"
@@ -144,34 +148,35 @@ export function AdminProductsPage({
                   {/* Status badge */}
                   <div className="absolute top-3 right-3">
                     <Badge
-                      variant={product.isActive ? "default" : "secondary"}
+                      variant={product?.isActive ? "default" : "secondary"}
                       className={
-                        product.isActive ? "bg-green-600" : "bg-gray-500"
+                        product?.isActive ? "bg-green-600" : "bg-gray-500"
                       }
                     >
-                      {product.isActive ? "Hoạt động" : "Tạm ẩn"}
+                      {product?.isActive ? "Hoạt động" : "Tạm ẩn"}
                     </Badge>
                   </div>
                 </div>
 
                 {/* Content */}
                 <button
-                  onClick={() => onViewDetail(product.id)}
+                  onClick={() => onViewDetail(product?.id)}
                   className="w-full p-6 text-left"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="group-hover:text-gray-600 transition">
-                      {product.name}
+                      {product?.name}
                     </h3>
                     <Badge variant="outline" className="ml-2 shrink-0">
-                      {product.series.name}
+                      {product?.series?.name ?? "Không rõ dòng"}
                     </Badge>
                   </div>
                   <p className="text-gray-600 line-clamp-2">
-                    {renderToStaticMarkup(parse(product.description)).replace(
-                      /<[^>]+>/g,
-                      ""
-                    )}
+                    {(() => {
+                      const div = document.createElement("div");
+                      div.innerHTML = product?.description || "";
+                      return div.textContent || div.innerText || "";
+                    })()}
                   </p>
                 </button>
               </div>
@@ -222,7 +227,6 @@ export function AdminProductsPage({
             ? products.find((p) => p.id === editingProductId) || null
             : null
         }
-        // series={series}
         images={initialProductImages}
         specs={initialProductSpecs}
         onClose={() => setShowProductFormDialog(false)}

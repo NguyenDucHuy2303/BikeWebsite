@@ -25,8 +25,6 @@ export function ProductsPage({}: ProductsPageProps) {
   };
 
   const handleNavigate = (path: string) => {
-    console.log("pathpathpathpath", path);
-
     navigate(path);
   };
 
