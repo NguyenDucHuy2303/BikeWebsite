@@ -51,16 +51,12 @@ function base64ToFile(base64: string, filename: string): File {
 interface AdminProductFormDialogProps {
   open: boolean;
   product: any | null;
-  images: ProductImage[];
-  specs: ProductSpec[];
   onClose: () => void;
 }
 
 export function AdminProductFormDialog({
   open,
   product,
-  images,
-  specs,
   onClose,
 }: AdminProductFormDialogProps) {
   const [serires, setSerires] = useState<any[]>([]);
@@ -80,68 +76,15 @@ export function AdminProductFormDialog({
   const [techImage, setTechImage] = useState<File[]>(
     product?.techImage ? [product?.techImage] : []
   );
-  // const [productImages, setProductImages] = useState<any[]>(
-  //   product?.galleryImages || []
-  // );
-  // const [specImage, setSpecImage] = useState<any[]>(
-  //   product?.techImage ? [product?.techImage] : []
-  // );
 
   const [features, setFeatures] = useState<string[]>(["", "", ""]);
   const [sections, setSections] = useState<
-    { title: string; description: string; image: File | null }[]
+    { title: string; description: string; image: File[] | null }[]
   >([{ title: "", description: "", image: null }]);
   const [specifications, setSpecifications] = useState<
     { title: string; description: string }[]
   >([{ title: "", description: "" }]);
   const [showSuccess, setShowSuccess] = useState(false);
-
-  // useEffect(() => {
-  //   if (open) {
-  //     if (product) {
-  //       // Edit mode
-  //       setFormData(product);
-  //       setProductImages(
-  //         images
-  //           .filter((img) => img.product_id === product.product_id)
-  //           .map((img) => ({
-  //             url: img.url,
-  //             is_main: img.is_main,
-  //             sort_order: img.sort_order,
-  //           }))
-  //       );
-  //       setFeatures(
-  //         specs
-  //           .filter(
-  //             (s) =>
-  //               s.product_id === product.product_id &&
-  //               s.type === "gach_dau_dong"
-  //           )
-  //           .sort((a, b) => a.sort_order - b.sort_order)
-  //           .map((s) => s.content)
-  //       );
-  //       setSpecImage(
-  //         specs.find(
-  //           (s) =>
-  //             s.product_id === product.product_id && s.type === "image_spec"
-  //         )?.content || ""
-  //       );
-  //     } else {
-  //       // Add mode - reset form
-  //       setFormData({
-  //         seriesId: serires[0]?.seriesId || 1,
-  //         name: "",
-  //         shortDesc: "",
-  //         description: "",
-  //         isActive: true,
-  //       });
-  //       setProductImages([]);
-  //       setFeatures(["", "", ""]);
-  //       setSpecImage("");
-  //     }
-  //     setShowSuccess(false);
-  //   }
-  // }, [open, product, images, specs]);
 
   useEffect(() => {
     // Auto-generate slug from name
@@ -171,7 +114,54 @@ export function AdminProductFormDialog({
       "features",
       JSON.stringify(features.filter((p) => p.trim() !== ""))
     );
-    formDataToSend.append("sections", JSON.stringify(sections));
+    console.log("sections", sections);
+    const stringValues: string[] = [];
+    const imageValues: File[] = [];
+
+    sections.forEach((section) => {
+      stringValues.push(section.title);
+      stringValues.push(section.description);
+
+      if (section.image) {
+        section.image.forEach((file) => imageValues.push(file));
+      }
+    });
+
+    formDataToSend.append("sections", JSON.stringify(stringValues));
+    const base64Files = await Promise.all(
+      imageValues.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          })
+      )
+    );
+    const base64Files2 = await Promise.all(
+      techImage.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          })
+      )
+    );
+    const base64Files3 = await Promise.all(
+      galleryImages.map(
+        (file) =>
+          new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          })
+      )
+    );
+    console.log("techImage", techImage);
+    console.log("galleryImages", galleryImages);
+
+    formDataToSend.append("sectionsImages", JSON.stringify(base64Files));
 
     [...techImage].forEach((file) => formDataToSend.append("techImage", file));
     [...galleryImages].forEach((file) =>
@@ -182,6 +172,7 @@ export function AdminProductFormDialog({
     } else {
       const res = await updateProduct(product.id, formDataToSend);
     }
+    // window.location.reload();
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);
@@ -441,8 +432,16 @@ export function AdminProductFormDialog({
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files) return;
+
+                        const selectedFiles: File[] = Array.from(files).filter(
+                          (f) => f.type.startsWith("image/")
+                        );
+
                         const updated = [...sections];
-                        updated[index].image = e.target.files?.[0] ?? null;
+                        updated[index].image =
+                          selectedFiles.length > 0 ? selectedFiles : null; // nếu không có file → null
                         setSections(updated);
                       }}
                     />

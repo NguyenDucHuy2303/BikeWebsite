@@ -227,8 +227,8 @@ export function AdminProductsPage({
             ? products.find((p) => p.id === editingProductId) || null
             : null
         }
-        images={initialProductImages}
-        specs={initialProductSpecs}
+        // images={initialProductImages}
+        // specs={initialProductSpecs}
         onClose={() => setShowProductFormDialog(false)}
       />
     </>
