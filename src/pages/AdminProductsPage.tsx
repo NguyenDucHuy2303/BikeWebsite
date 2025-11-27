@@ -26,18 +26,10 @@ import parse from "html-react-parser";
 import { renderToStaticMarkup } from "react-dom/server";
 
 interface AdminProductsPageProps {
-  series: BikeSeries[];
-  onEdit: (productId: number) => void;
-  onDelete: (productId: number) => void;
   onViewDetail: (productId: number) => void;
 }
 
-export function AdminProductsPage({
-  series,
-  onEdit,
-  onDelete,
-  onViewDetail,
-}: AdminProductsPageProps) {
+export function AdminProductsPage({ onViewDetail }: AdminProductsPageProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [showProductFormDialog, setShowProductFormDialog] = useState(false);

@@ -16,68 +16,74 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
+import { FlexibleImageUpload } from "./ImageFile";
+import { createNew, updateNew } from "../../api/newsApi";
+function base64ToFile(base64: string, filename: string): File {
+  let mime = "image/png";
+  let b64Data = base64;
+
+  if (base64.includes(",")) {
+    const arr = base64.split(",");
+    mime = arr[0].match(/:(.*?);/)![1];
+    b64Data = arr[1];
+  }
+
+  const bstr = atob(b64Data);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
+  return new File([u8arr], filename, { type: mime });
+}
 
 interface AdminNewsFormDialogProps {
   open: boolean;
-  newsItem: News | null;
-  onSave: (
-    news: Omit<News, "news_id" | "created_at"> & {
-      news_id?: number;
-      created_at?: string;
-    }
-  ) => void;
+  newsItem: any | null;
   onClose: () => void;
 }
 
 export function AdminNewsFormDialog({
   open,
   newsItem,
-  onSave,
   onClose,
 }: AdminNewsFormDialogProps) {
-  const [formData, setFormData] = useState<
-    Omit<News, "news_id" | "created_at"> & {
-      news_id?: number;
-      created_at?: string;
-    }
-  >({
-    news_id: newsItem?.news_id,
+  console.log("newsItem", newsItem);
+
+  const [image, setImage] = useState<File[]>([]);
+  const [formData, setFormData] = useState<Partial<any>>({
+    id: newsItem?.id,
     title: newsItem?.title || "",
     slug: newsItem?.slug || "",
-    cover_image: newsItem?.cover_image || "",
     content: newsItem?.content || "",
     tags: newsItem?.tags || [],
-    is_hidden: newsItem?.is_hidden ?? false,
-    created_at: newsItem?.created_at,
+    isHidden: newsItem?.isHidden ?? false,
+    seoRitle: newsItem?.seoRitle || "",
+    seoDescription: newsItem?.seoDescription || "",
   });
 
   const [tagInput, setTagInput] = useState("");
 
-  // Update form when newsItem changes
   useEffect(() => {
     if (newsItem) {
       setFormData({
-        news_id: newsItem.news_id,
+        id: newsItem.id,
         title: newsItem.title,
         slug: newsItem.slug,
-        cover_image: newsItem.cover_image,
         content: newsItem.content,
         tags: newsItem.tags,
-        is_hidden: newsItem.is_hidden,
-        created_at: newsItem.created_at,
-        seo_title: newsItem.seo_title,
-        seo_description: newsItem.seo_description,
+        isHidden: newsItem.isHidden,
+        seoRitle: newsItem.seoRitle,
+        seoDescription: newsItem.seoDescription,
       });
     } else {
       setFormData({
         title: "",
         slug: "",
-        cover_image: "",
+        coverImage: "",
         content: "",
         tags: [],
-        is_hidden: false,
-        seo_title: "",
-        seo_description: "",
+        isHidden: false,
+        seoRitle: "",
+        seoDescription: "",
       });
     }
     setTagInput("");
@@ -99,15 +105,39 @@ export function AdminNewsFormDialog({
     }
   }, [formData.title, newsItem]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    console.log("formData", formData);
+    console.log("newsItem", newsItem);
+    const formDataToSend = new FormData();
+    if (formData.id) {
+      formDataToSend.append("id", formData.id);
+    }
+    formDataToSend.append("title", formData.title || "");
+    formDataToSend.append("slug", formData.slug || "");
+    formDataToSend.append("content", formData.content || "");
+    formDataToSend.append("isHidden", String(formData.isHidden || false));
+    formDataToSend.append("seoRitle", formData.seoRitle || "");
+    formDataToSend.append("tags", JSON.stringify(formData.tags || []));
+    [...image].forEach((file) => formDataToSend.append("coverImage", file));
+
+    if (newsItem && newsItem?.id) {
+      // Có ID → update
+      const res = await updateNew(newsItem?.id, formDataToSend);
+    } else {
+      // Không có ID → create
+      const res = await createNew(formDataToSend);
+    }
+
     onClose();
   };
 
   const handleAddTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
-      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+    if (tagInput.trim() && !formData.tags?.includes(tagInput.trim())) {
+      setFormData({
+        ...formData,
+        tags: [...(formData.tags || []), tagInput.trim()],
+      });
       setTagInput("");
     }
   };
@@ -115,7 +145,7 @@ export function AdminNewsFormDialog({
   const handleRemoveTag = (tagToRemove: string) => {
     setFormData({
       ...formData,
-      tags: formData.tags.filter((tag) => tag !== tagToRemove),
+      tags: formData.tags?.filter((tag: any) => tag !== tagToRemove) || [],
     });
   };
 
@@ -126,9 +156,30 @@ export function AdminNewsFormDialog({
     }
   };
 
+  useEffect(() => {
+    if (newsItem?.coverImage) {
+      const coverImagesArray = Array.isArray(newsItem.coverImage)
+        ? newsItem.coverImage
+        : [newsItem.coverImage];
+
+      const filesFromImage = coverImagesArray
+        .filter(Boolean) // loại bỏ undefined/null
+        .map((b64: string, i: number) =>
+          base64ToFile(
+            b64.startsWith("data:") ? b64 : `data:image/png;base64,${b64}`,
+            `image-${i + 1}.png`
+          )
+        );
+
+      setImage(filesFromImage);
+    } else {
+      setImage([]);
+    }
+  }, [newsItem]);
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:!w-[90vw] sm:!max-w-[90vw] md:!w-[85vw] md:!max-w-[85vw] lg:!w-[80vw] lg:!max-w-[80vw] xl:!w-[85vw] xl:!max-w-[85vw] 2xl:!w-[90vw] 2xl:!max-w-[1800px] max-h-[90vh] p-0">
+      <DialogContent className="w-[95vw] sm:!w-[90vw] max-h-[90vh] p-0">
         <DialogHeader className="px-6 pt-6">
           <DialogTitle>
             {newsItem ? "Sửa tin tức" : "Thêm tin tức mới"}
@@ -147,7 +198,7 @@ export function AdminNewsFormDialog({
                   <Label htmlFor="title">Tiêu đề bài viết *</Label>
                   <Input
                     id="title"
-                    value={formData.title}
+                    value={formData.title || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
@@ -160,7 +211,7 @@ export function AdminNewsFormDialog({
                   <Label htmlFor="slug">Slug (URL)</Label>
                   <Input
                     id="slug"
-                    value={formData.slug}
+                    value={formData.slug || ""}
                     onChange={(e) =>
                       setFormData({ ...formData, slug: e.target.value })
                     }
@@ -169,15 +220,14 @@ export function AdminNewsFormDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cover_image">Ảnh bìa *</Label>
-                  <ImageUpload
-                    value={formData.cover_image}
-                    onChange={(url) =>
-                      setFormData({ ...formData, cover_image: url })
-                    }
+                  <Label htmlFor="coverImage">Ảnh bìa *</Label>
+                  <FlexibleImageUpload
+                    value={image || []}
+                    onChange={setImage}
                   />
                 </div>
 
+                {/* Tags */}
                 <div className="space-y-2 lg:col-span-2">
                   <Label>Tags</Label>
                   <div className="flex gap-2">
@@ -197,9 +247,9 @@ export function AdminNewsFormDialog({
                       Thêm
                     </Button>
                   </div>
-                  {formData.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3 p-3 bg-white rounded-lg border">
-                      {formData.tags.map((tag, index) => (
+                  {formData.tags && formData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3 p-3 bg-white rounded-lg border w-full">
+                      {formData.tags.map((tag: any, index: number) => (
                         <Badge
                           key={index}
                           variant="secondary"
@@ -219,15 +269,16 @@ export function AdminNewsFormDialog({
                   )}
                 </div>
 
+                {/* Is Hidden */}
                 <div className="flex items-center gap-2 lg:col-span-2">
                   <Switch
-                    id="is_hidden"
-                    checked={formData.is_hidden}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, is_hidden: checked })
+                    id="isHidden"
+                    checked={formData.isHidden || false}
+                    onCheckedChange={(checked: any) =>
+                      setFormData({ ...formData, isHidden: checked })
                     }
                   />
-                  <Label htmlFor="is_hidden">Ẩn bài viết</Label>
+                  <Label htmlFor="isHidden">Ẩn bài viết</Label>
                 </div>
               </div>
             </div>
@@ -236,7 +287,7 @@ export function AdminNewsFormDialog({
             <div className="space-y-4 p-6 bg-gray-50 rounded-lg border">
               <h3>Nội dung bài viết</h3>
               <RichTextEditor
-                value={formData.content}
+                value={formData.content || ""}
                 onChange={(value) =>
                   setFormData({ ...formData, content: value })
                 }

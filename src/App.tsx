@@ -316,13 +316,6 @@ export default function App() {
           path="products"
           element={
             <AdminProductsPage
-              series={[]}
-              onEdit={function (productId: number): void {
-                throw new Error("Function not implemented.");
-              }}
-              onDelete={function (productId: number): void {
-                throw new Error("Function not implemented.");
-              }}
               onViewDetail={function (productId: number): void {
                 throw new Error("Function not implemented.");
               }}
@@ -334,14 +327,10 @@ export default function App() {
           path="news"
           element={
             <AdminNewsPage
-              news={initialNews}
               onDelete={function (seriesId: number): void {
                 throw new Error("Function not implemented.");
               }}
               onEdit={function (newsId: number): void {
-                throw new Error("Function not implemented.");
-              }}
-              onAdd={function (): void {
                 throw new Error("Function not implemented.");
               }}
             />

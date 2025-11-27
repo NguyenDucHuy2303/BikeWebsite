@@ -76,11 +76,13 @@ export function AdminProductFormDialog({
   const [techImage, setTechImage] = useState<File[]>(
     product?.techImage ? [product?.techImage] : []
   );
-
+  const [sectionsImage, setSectionsImage] = useState<File[] | string[]>(
+    product?.sectionsImages || []
+  );
   const [features, setFeatures] = useState<string[]>(["", "", ""]);
   const [sections, setSections] = useState<
-    { title: string; description: string; image: File[] | null }[]
-  >([{ title: "", description: "", image: null }]);
+    { title: string; description: string; image: File[] }[]
+  >([{ title: "", description: "", image: [] }]);
   const [specifications, setSpecifications] = useState<
     { title: string; description: string }[]
   >([{ title: "", description: "" }]);
@@ -114,54 +116,23 @@ export function AdminProductFormDialog({
       "features",
       JSON.stringify(features.filter((p) => p.trim() !== ""))
     );
-    console.log("sections", sections);
     const stringValues: string[] = [];
     const imageValues: File[] = [];
 
-    sections.forEach((section) => {
+    sections.forEach((section, index) => {
       stringValues.push(section.title);
       stringValues.push(section.description);
-
-      if (section.image) {
+      if (section.image && section.image.length > 0) {
         section.image.forEach((file) => imageValues.push(file));
+      } else if (sectionsImage[index]) {
+        imageValues.push(sectionsImage[index] as File);
       }
     });
 
-    formDataToSend.append("sections", JSON.stringify(stringValues));
-    const base64Files = await Promise.all(
-      imageValues.map(
-        (file) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          })
-      )
+    formDataToSend.append("sections", JSON.stringify(sections));
+    [...imageValues].forEach((file) =>
+      formDataToSend.append("sectionsImages", file)
     );
-    const base64Files2 = await Promise.all(
-      techImage.map(
-        (file) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          })
-      )
-    );
-    const base64Files3 = await Promise.all(
-      galleryImages.map(
-        (file) =>
-          new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          })
-      )
-    );
-    console.log("techImage", techImage);
-    console.log("galleryImages", galleryImages);
-
-    formDataToSend.append("sectionsImages", JSON.stringify(base64Files));
 
     [...techImage].forEach((file) => formDataToSend.append("techImage", file));
     [...galleryImages].forEach((file) =>
@@ -197,8 +168,6 @@ export function AdminProductFormDialog({
     if (serires.length > 0) {
       if (product) {
         // Edit mode
-        console.log("product", product);
-
         setFormData((prev) => ({
           ...prev,
           seriesId: product?.series?.id?.toString() || "",
@@ -208,6 +177,7 @@ export function AdminProductFormDialog({
           isActive: product?.isActive,
         }));
         setFeatures(product?.features || ["", "", ""]);
+
         const filesFromBE = product?.galleryImages
           ? product?.galleryImages.map((b64: any, i: number) =>
               base64ToFile(
@@ -224,10 +194,27 @@ export function AdminProductFormDialog({
               )
             )
           : [];
+        const filesFromBESectionImage = product?.sectionsImages
+          ? product.sectionsImages.map((b64: string, i: number) =>
+              base64ToFile(
+                `data:image/png;base64,${b64}`,
+                `image-${i + 10}.png`
+              )
+            )
+          : [];
         setGalleryImages(filesFromBE || []);
+        setSectionsImage(filesFromBESectionImage || []);
         setTechImage(filesFromBETechImage || []);
+        const updatedSections = product.sections.map(
+          (section: any, i: number) => ({
+            ...section,
+            image: filesFromBESectionImage[i]
+              ? [filesFromBESectionImage[i]]
+              : [],
+          })
+        );
+        setSections(updatedSections);
       } else {
-        // Add mode, auto select first series if empty
         setFormData((prev) => ({
           ...prev,
           seriesId: prev.seriesId || serires[0]?.id?.toString() || "",
@@ -426,23 +413,31 @@ export function AdminProductFormDialog({
                       }}
                       placeholder={`Mô tả ${index + 1}...`}
                     />
+                    {sectionsImage && sectionsImage[index] && (
+                      <img
+                        src={URL.createObjectURL(sectionsImage[index] as any)}
+                        alt={`Preview ${index}`}
+                        className="w-full h-40 object-cover rounded-lg border"
+                      />
+                    )}
 
                     {/* Image */}
                     <input
                       type="file"
                       accept="image/*"
                       onChange={(e) => {
-                        const files = e.target.files;
-                        if (!files) return;
+                        const file = e.target.files?.[0] ?? null;
 
-                        const selectedFiles: File[] = Array.from(files).filter(
-                          (f) => f.type.startsWith("image/")
-                        );
+                        // Cập nhật sections
+                        const updatedSections = [...sections];
+                        updatedSections[index].image = file ? [file] : [];
+                        setSections(updatedSections);
 
-                        const updated = [...sections];
-                        updated[index].image =
-                          selectedFiles.length > 0 ? selectedFiles : null; // nếu không có file → null
-                        setSections(updated);
+                        // Cập nhật sectionsImage để render preview
+
+                        const updatedSectionsImage = [...sectionsImage];
+                        updatedSectionsImage[index] = file!; // file chắc chắn có, không gán null
+                        setSectionsImage(updatedSectionsImage as any);
                       }}
                     />
 
@@ -469,7 +464,7 @@ export function AdminProductFormDialog({
                   onClick={() =>
                     setSections([
                       ...sections,
-                      { title: "", description: "", image: null },
+                      { title: "", description: "", image: [] },
                     ])
                   }
                 >

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
@@ -31,27 +31,26 @@ import {
 } from "../components/ui/alert-dialog";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { AdminNewsFormDialog } from "../components/admin/AdminNewsFormDialog";
+import { getNews } from "../api/newsApi";
 
 interface AdminNewsPageProps {
-  news: News[];
   onEdit: (newsId: number) => void;
   onDelete: (newsId: number) => void;
-  onAdd: () => void;
   onViewDetail?: (newsId: number) => void;
 }
 
 export function AdminNewsPage({
-  news,
   onEdit,
   onDelete,
-  onAdd,
   onViewDetail,
 }: AdminNewsPageProps) {
+  const [news, setNews] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
+  const [editingNewsId, setEditingNewsId] = useState<string | null>(null);
   const [showNewsFormDialog, setShowNewsFormDialog] = useState(false);
+
   const handleAddNews = () => {
     setEditingNewsId(null);
     setShowNewsFormDialog(true);
@@ -63,8 +62,8 @@ export function AdminNewsPage({
       item.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       filterStatus === "all" ||
-      (filterStatus === "visible" && !item.is_hidden) ||
-      (filterStatus === "hidden" && item.is_hidden);
+      (filterStatus === "visible" && !item.isHidden) ||
+      (filterStatus === "hidden" && item.isHidden);
 
     return matchesSearch && matchesStatus;
   });
@@ -82,6 +81,23 @@ export function AdminNewsPage({
   const featuredNews = filteredNews.length > 0 ? filteredNews[0] : null;
   const regularNews = filteredNews.slice(1);
 
+  const handleEditProduct = (id: string) => {
+    setEditingNewsId(id);
+    setShowNewsFormDialog(true);
+  };
+
+  const fetchNews = async () => {
+    try {
+      const res = await getNews();
+      setNews(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNews();
+  }, [showNewsFormDialog]);
   return (
     <>
       <div className="space-y-6">
@@ -150,7 +166,7 @@ export function AdminNewsPage({
               <div className="relative bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden group">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
                   <ImageWithFallback
-                    src={featuredNews.cover_image}
+                    src={featuredNews.coverImage}
                     alt={featuredNews.title}
                     className="w-full h-full object-cover min-h-[300px]"
                   />
@@ -163,10 +179,10 @@ export function AdminNewsPage({
                       )}
                       <Badge
                         variant={
-                          featuredNews.is_hidden ? "secondary" : "default"
+                          featuredNews.isHidden ? "secondary" : "default"
                         }
                       >
-                        {featuredNews.is_hidden ? "Đã ẩn" : "Hiển thị"}
+                        {featuredNews.isHidden ? "Đã ẩn" : "Hiển thị"}
                       </Badge>
                     </div>
 
@@ -188,11 +204,13 @@ export function AdminNewsPage({
 
                     {featuredNews.tags && featuredNews.tags.length > 1 && (
                       <div className="flex flex-wrap gap-2 mb-6">
-                        {featuredNews.tags.slice(1).map((tag, idx) => (
-                          <Badge key={idx} variant="outline">
-                            {tag}
-                          </Badge>
-                        ))}
+                        {featuredNews.tags
+                          .slice(1)
+                          .map((tag: any, idx: number) => (
+                            <Badge key={idx} variant="outline">
+                              {tag}
+                            </Badge>
+                          ))}
                       </div>
                     )}
                   </div>
@@ -204,7 +222,7 @@ export function AdminNewsPage({
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() => onViewDetail(featuredNews.news_id)}
+                      onClick={() => onViewDetail(featuredNews.id)}
                       className="gap-2 shadow-lg"
                     >
                       <Eye className="w-4 h-4" />
@@ -214,7 +232,7 @@ export function AdminNewsPage({
                   <Button
                     size="sm"
                     variant="secondary"
-                    onClick={() => onEdit(featuredNews.news_id)}
+                    onClick={() => handleEditProduct(featuredNews.id)}
                     className="gap-2 shadow-lg"
                   >
                     <Pencil className="w-4 h-4" />
@@ -223,7 +241,7 @@ export function AdminNewsPage({
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => setDeleteId(featuredNews.news_id)}
+                    onClick={() => setDeleteId(featuredNews.id)}
                     className="gap-2 shadow-lg"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -238,11 +256,11 @@ export function AdminNewsPage({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {regularNews.map((newsItem) => (
                   <div
-                    key={newsItem.news_id}
+                    key={newsItem.id}
                     className="relative bg-white rounded-xl shadow-sm hover:shadow-md transition group overflow-hidden"
                   >
                     <ImageWithFallback
-                      src={newsItem.cover_image}
+                      src={newsItem.coverImage}
                       alt={newsItem.title}
                       className="w-full aspect-video object-cover"
                     />
@@ -255,10 +273,10 @@ export function AdminNewsPage({
                           </Badge>
                         )}
                         <Badge
-                          variant={newsItem.is_hidden ? "secondary" : "default"}
+                          variant={newsItem.isHidden ? "secondary" : "default"}
                           className="text-xs"
                         >
-                          {newsItem.is_hidden ? "Đã ẩn" : "Hiển thị"}
+                          {newsItem.isHidden ? "Đã ẩn" : "Hiển thị"}
                         </Badge>
                       </div>
 
@@ -275,22 +293,24 @@ export function AdminNewsPage({
                         <div className="flex items-center gap-1">
                           <Calendar size={16} />
                           <span className="text-sm">
-                            {formatDate(newsItem.created_at)}
+                            {formatDate(newsItem.createdAt)}
                           </span>
                         </div>
                       </div>
 
                       {newsItem.tags && newsItem.tags.length > 1 && (
                         <div className="flex flex-wrap gap-1">
-                          {newsItem.tags.slice(1, 3).map((tag, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
+                          {newsItem.tags
+                            .slice(1, 3)
+                            .map((tag: any, idx: number) => (
+                              <Badge
+                                key={idx}
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
                           {newsItem.tags.length > 3 && (
                             <Badge variant="outline" className="text-xs">
                               +{newsItem.tags.length - 3}
@@ -306,7 +326,7 @@ export function AdminNewsPage({
                         <Button
                           size="sm"
                           variant="secondary"
-                          onClick={() => onViewDetail(newsItem.news_id)}
+                          onClick={() => onViewDetail(newsItem.id)}
                           className="shadow-lg"
                         >
                           <Eye className="w-4 h-4" />
@@ -315,7 +335,7 @@ export function AdminNewsPage({
                       <Button
                         size="sm"
                         variant="secondary"
-                        onClick={() => onEdit(newsItem.news_id)}
+                        onClick={() => onEdit(newsItem.id)}
                         className="shadow-lg"
                       >
                         <Pencil className="w-4 h-4" />
@@ -323,7 +343,7 @@ export function AdminNewsPage({
                       <Button
                         size="sm"
                         variant="destructive"
-                        onClick={() => setDeleteId(newsItem.news_id)}
+                        onClick={() => setDeleteId(newsItem.id)}
                         className="shadow-lg"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -370,10 +390,9 @@ export function AdminNewsPage({
         open={showNewsFormDialog}
         newsItem={
           editingNewsId
-            ? news.find((n) => n.news_id === editingNewsId) || null
+            ? news.find((n) => n.id === editingNewsId) || null
             : null
         }
-        onSave={() => {}}
         onClose={() => setShowNewsFormDialog(false)}
       />
     </>

@@ -15,12 +15,6 @@ export function FlexibleImageUpload({
   className = "",
   multiple = false,
 }: FlexibleImageUploadProps) {
-  if (multiple) {
-    console.log("multiple", value);
-  } else {
-    console.log("value", value);
-  }
-
   const [internalValue, setInternalValue] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
