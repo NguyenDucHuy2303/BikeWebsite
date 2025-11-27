@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -65,6 +65,7 @@ import {
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { ImageUpload } from "../components/admin/ImageUpload";
 import { ScrollArea } from "../components/ui/scroll-area";
+import { getMainPages } from "../api/mainPageApi";
 
 interface AdminDashboardProps {
   totalProducts: number;
@@ -280,6 +281,21 @@ export function AdminDashboard({
     setShowBannerDialog(false);
     setEditingBanners([]);
   };
+
+  const [mainPage, setMainPage] = useState<any[]>([]);
+
+  const fetchMainPages = async () => {
+    try {
+      const res = await getMainPages();
+      setMainPage(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMainPages();
+  }, []);
 
   return (
     <div className="space-y-6">

@@ -1,6 +1,8 @@
 import { Calendar, User, ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getNews } from "../api/newsApi";
 
 interface NewsPageProps {}
 
@@ -10,76 +12,19 @@ export function NewsPage({}: NewsPageProps) {
   const handleNavigate = (path: string) => {
     navigate(path);
   };
+  const [newsList, setNewsList] = useState<any[]>([]);
+  const fetchNews = async () => {
+    try {
+      const res = await getNews();
+      setNewsList(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-  const newsList = [
-    {
-      id: 1,
-      title: "Ra Mắt Dòng Xe Đạp Điện Thể Thao GreenBike Sport 2024",
-      excerpt:
-        "GreenBike tự hào giới thiệu dòng xe đạp điện thể thao mới với động cơ 500W, pin dung lượng cao và thiết kế aerodynamic hiện đại.",
-      image:
-        "https://images.unsplash.com/photo-1673969206245-7da3eb7cde76?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200",
-      date: "05/10/2024",
-      author: "Nguyễn Văn Minh",
-      category: "Sản Phẩm Mới",
-    },
-    {
-      id: 2,
-      title: "Chương Trình Khuyến Mãi Lớn Nhân Ngày 20/10",
-      excerpt:
-        "Giảm giá đến 20% cho tất cả các dòng xe đạp điện, tặng kèm phụ kiện trị giá 2 triệu đồng và hỗ trợ trả góp 0% lãi suất.",
-      image:
-        "https://images.unsplash.com/photo-1605271864611-58dd08d10547?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800",
-      date: "01/10/2024",
-      author: "Trần Thị Hoa",
-      category: "Khuyến Mãi",
-    },
-    {
-      id: 3,
-      title: "Khai Trương Showroom GreenBike Tại Đà Nẵng",
-      excerpt:
-        "Mở rộng hệ thống phân phối với showroom rộng 500m² tại trung tâm Đà Nẵng, phục vụ khách hàng khu vực miền Trung.",
-      image:
-        "https://images.unsplash.com/photo-1690291497543-4de63fa4fa75?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800",
-      date: "28/09/2024",
-      author: "Lê Văn Tuấn",
-      category: "Sự Kiện",
-    },
-    {
-      id: 4,
-      title: "GreenBike Đạt Chứng Nhận CE Về An Toàn Sản Phẩm",
-      excerpt:
-        "Toàn bộ dòng sản phẩm xe đạp điện GreenBike đã được cấp chứng nhận CE, khẳng định chất lượng đạt tiêu chuẩn châu Âu.",
-      image:
-        "https://images.unsplash.com/photo-1692668696893-d8e5fb0fadad?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800",
-      date: "20/09/2024",
-      author: "Phạm Minh Đức",
-      category: "Thành Tựu",
-    },
-    {
-      id: 5,
-      title: "Hướng Dẫn Bảo Dưỡng Xe Đạp Điện Đúng Cách",
-      excerpt:
-        "Chia sẻ kinh nghiệm và hướng dẫn chi tiết cách bảo dưỡng xe đạp điện để kéo dài tuổi thọ pin và động cơ.",
-      image:
-        "https://images.unsplash.com/photo-1675798227643-da319f8ee8f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800",
-      date: "15/09/2024",
-      author: "Nguyễn Văn Minh",
-      category: "Hướng Dẫn",
-    },
-    {
-      id: 6,
-      title: "GreenBike Tham Gia Triển Lãm Vietnam AutoExpo 2024",
-      excerpt:
-        "Trưng bày 15 mẫu xe đạp điện mới nhất tại triển lãm ô tô - xe máy quốc tế Việt Nam lần thứ 16.",
-      image:
-        "https://images.unsplash.com/photo-1713839603530-8a3b3120c9d2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800",
-      date: "10/09/2024",
-      author: "Trần Thị Hoa",
-      category: "Sự Kiện",
-    },
-  ];
-
+  useEffect(() => {
+    fetchNews();
+  }, []);
   return (
     <div className="py-12 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -97,11 +42,11 @@ export function NewsPage({}: NewsPageProps) {
           {newsList.map((news) => (
             <button
               key={news.id}
-              onClick={() => handleNavigate("1")}
+              onClick={() => handleNavigate(news.id)}
               className="bg-white rounded-xl shadow-sm hover:shadow-md transition group overflow-hidden text-left"
             >
               <ImageWithFallback
-                src={news.image}
+                src={news.coverImage}
                 alt={news.title}
                 className="w-full aspect-video object-cover"
               />

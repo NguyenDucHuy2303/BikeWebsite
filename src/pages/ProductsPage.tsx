@@ -50,7 +50,7 @@ export function ProductsPage({}: ProductsPageProps) {
             >
               <div className="aspect-video overflow-hidden">
                 <ImageWithFallback
-                  src={line.image}
+                  src={line.techImage}
                   alt={line.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />

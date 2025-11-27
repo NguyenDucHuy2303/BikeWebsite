@@ -7,19 +7,11 @@ import { getProductById, getProducts } from "../api/productApi";
 interface ProductDetailPageProps {}
 
 export function ProductDetailPage({}: ProductDetailPageProps) {
-  const productId = 0;
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const handleNavigate = (path: string) => {
-    navigate(path);
-  };
   const [selectedImage, setSelectedImage] = useState(0);
-  const { id } = useParams();
   const [productLine, setProduct] = useState<any>();
-
-  useEffect(() => {
-    fetchProduct();
-  }, []);
 
   const fetchProduct = async () => {
     try {
@@ -29,6 +21,14 @@ export function ProductDetailPage({}: ProductDetailPageProps) {
       console.error(err);
     }
   };
+
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
+
+  useEffect(() => {
+    fetchProduct();
+  }, []);
 
   return (
     <div className="bg-gray-50">
@@ -49,7 +49,7 @@ export function ProductDetailPage({}: ProductDetailPageProps) {
       <div className="relative bg-gradient-to-r from-green-700 to-green-600 text-white">
         <div className="absolute inset-0 opacity-20">
           <ImageWithFallback
-            src={productLine?.heroImage}
+            src={productLine?.techImage}
             alt={productLine?.name}
             className="w-full h-full object-cover"
           />
@@ -109,14 +109,14 @@ export function ProductDetailPage({}: ProductDetailPageProps) {
           {productLine?.sections.map((section: any, index: number) => (
             <div key={index} className="flex flex-col items-center text-center">
               <ImageWithFallback
-                src={section.image}
+                src={productLine.sectionsImages[index]}
                 alt={section.title}
                 className="w-full max-w-4xl aspect-video object-cover rounded-xl shadow-md mb-8"
               />
               <div className="max-w-3xl px-8">
                 <h2 className="mb-6">{section.title}</h2>
                 <p className="text-gray-600 leading-relaxed">
-                  {section.content}
+                  {section.description}
                 </p>
               </div>
             </div>
